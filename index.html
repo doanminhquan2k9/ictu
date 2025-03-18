@@ -1,0 +1,52 @@
+<?php
+// Token bot Telegram
+$TOKEN = "7279675859:AAHQthS6OPlKse8bAcd6SgVlzcNv-VT_-pQ"; // Thay bằng token bot mới của bạn
+
+// Tệp để lưu ID cập nhật cuối cùng
+$LAST_UPDATE_FILE = "last_update_id.txt";
+
+// Đọc ID cập nhật cuối cùng
+$last_update_id = 0;
+if (file_exists($LAST_UPDATE_FILE)) {
+    $last_update_id = (int) file_get_contents($LAST_UPDATE_FILE);
+}
+
+// Lấy cập nhật từ Telegram
+$url = "https://api.telegram.org/bot$TOKEN/getUpdates?offset=" . ($last_update_id + 1);
+$response = file_get_contents($url);
+$updates = json_decode($response, true);
+
+if (isset($updates["result"])) {
+    foreach ($updates["result"] as $update) {
+        $update_id = $update["update_id"];
+        
+        if (isset($update["message"])) {
+            $chat_id = $update["message"]["chat"]["id"];
+            $message_text = trim($update["message"]["text"]);
+            
+            if ($message_text === "/help") {
+                sendMessage($chat_id, "Xin chào! Đây là bot hỗ trợ.");
+            }
+        }
+        
+        // Cập nhật ID cập nhật cuối cùng
+        $last_update_id = $update_id;
+    }
+    
+    // Lưu ID cập nhật cuối cùng vào tệp
+    file_put_contents($LAST_UPDATE_FILE, $last_update_id);
+}
+
+// Hàm gửi tin nhắn
+function sendMessage($chat_id, $message) {
+    global $TOKEN;
+    $url = "https://api.telegram.org/bot$TOKEN/sendMessage";
+    
+    $data = [
+        'chat_id' => $chat_id,
+        'text' => $message
+    ];
+    
+    file_get_contents($url . "?" . http_build_query($data));
+}
+?>
